@@ -53,7 +53,6 @@ def build_default_db():
         "daily_logs": []
     }
 
-# التحقق من الملف وإعادة شحن البيانات الافتراضية بذكاء
 if not os.path.exists(DB_FILE):
     with open(DB_FILE, "w", encoding="utf-8") as db_f:
         json.dump(build_default_db(), db_f, ensure_ascii=False, indent=2)
@@ -64,7 +63,6 @@ with open(DB_FILE, "r", encoding="utf-8") as db_f:
     except:
         db = build_default_db()
 
-# فحص ذكي: إذا كانت القوائم فارغة تماماً بسبب التحديث السابق، نملأها بالبيانات الافتراضية
 if not db.get("products") or len(db["products"]) == 0:
     db = build_default_db()
 
@@ -84,33 +82,52 @@ with st.sidebar:
         "🛠️ إعدادات المنتجات والـ BOM"
     ])
 
-# ─── 1️⃣ لوحة المراقبة والرسوم البيانية ───
+# ─── 1️⃣ لوحة المراقبة والرسوم البيانية (محدثة بالفلاتر الذكية) ───
 if page == "📊 لوحة المراقبة والرسوم البيانية":
     st.title("📊 نظام المراقبة الذكي ومؤشرات الأداء")
     
-    total_products = len(db.get("products", []))
-    total_parts = len(db.get("parts", []))
-    danger_parts = sum(1 for p in db.get("parts", []) if p["current_stock"] <= p["danger_zone"])
+    # تحضير خيارات الفلتر بناءً على المنتجات المتاحة في النظام
+    product_dict = {p["name_ar"]: p["id"] for p in db.get("products", [])}
+    filter_options = ["🔍 عرض كل المكونات"] + list(product_dict.keys())
     
+    # ويدجت الفلتر في الأعلى
+    selected_filter = st.selectbox("🎯 تصفية عرض المخزون حسب المنتج المستهدف:", filter_options)
+    st.markdown("---")
+    
+    # تصفية البيانات بناءً على اختيار المستخدم
+    all_parts = db.get("parts", [])
+    if selected_filter == "🔍 عرض كل المكونات":
+        filtered_parts = all_parts
+        total_products_display = len(db.get("products", []))
+    else:
+        target_product_id = product_dict[selected_filter]
+        filtered_parts = [p for p in all_parts if p["product_id"] == target_product_id]
+        total_products_display = 1
+
+    # حساب المؤشرات بناءً على الفلتر المختار
+    total_parts_display = len(filtered_parts)
+    danger_parts_display = sum(1 for p in filtered_parts if p["current_stock"] <= p["danger_zone"])
+    
+    # عرض الكروت الذكية للمؤشرات
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-label">📦 إجمالي المنتجات النهائية</div><div class="kpi-value">{total_products}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">📦 المنتجات المشمولة بالعرض</div><div class="kpi-value">{total_products_display}</div></div>', unsafe_allow_html=True)
     with c2:
-        st.markdown(f'<div class="kpi-card success"><div class="kpi-label">🔧 إجمالي أنواع المكونات</div><div class="kpi-value">{total_parts}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-card success"><div class="kpi-label">🔧 أنواع المكونات المعروضة</div><div class="kpi-value">{total_parts_display}</div></div>', unsafe_allow_html=True)
     with c3:
-        st.markdown(f'<div class="kpi-card danger"><div class="kpi-label">🚨 قطع في منطقة الخطر</div><div class="kpi-value" style="color:#ef4444">{danger_parts}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-card danger"><div class="kpi-label">🚨 قطع تحت حد الأمان (خطر)</div><div class="kpi-value" style="color:#ef4444">{danger_parts_display}</div></div>', unsafe_allow_html=True)
 
     st.markdown("<div class=\"section-title\">📈 تحليل حالة المخزون الحالي مقارنة بحد الخطر</div>", unsafe_allow_html=True)
     
-    if total_parts > 0:
-        df_parts = pd.DataFrame(db["parts"])
+    if total_parts_display > 0:
+        df_parts = pd.DataFrame(filtered_parts)
         fig = go.Figure()
         fig.add_trace(go.Bar(name="المخزون الحالي", x=df_parts["name_ar"], y=df_parts["current_stock"], marker_color="#3b82f6"))
         fig.add_trace(go.Scatter(name="حد الأمان (الخطر)", x=df_parts["name_ar"], y=df_parts["danger_zone"], mode="lines+markers", line=dict(color="#ef4444", width=3, dash="dash")))
         fig.update_layout(barmode="group", height=400, font=dict(family="Cairo"), margin=dict(t=20, b=20, l=20, r=20))
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("💡 المخزن فارغ حالياً. اذهب إلى صفحة الإعدادات لإضافة منتجاتك ومكوناتها أولاً!")
+        st.info("💡 لا توجد قطع غيار مسجلة تحت هذا التصنيف حالياً. اذهب لصفحة الإعدادات لربط قطع الغيار بهذا المنتج.")
 
 # ─── 2️⃣ تسجيل حركة إنتاج وسحب ───
 elif page == "✏️ تسجيل حركة إنتاج وسحب":
