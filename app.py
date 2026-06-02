@@ -30,6 +30,7 @@ st.markdown("""
 
 DB_FILE = "inventory_db.json"
 
+# إعادة هيكلة شجرة المكونات لتصبح كلها تابعة لـ "ظهر كرسي RT50" بشكل صحيح
 def build_default_db():
     return {
         "products": [
@@ -37,16 +38,16 @@ def build_default_db():
             {"id": "P002", "name_ar": "ظهر كرسي RT50"}
         ],
         "parts": [
-            {"id": "S001", "name_ar": "جنب عدل", "product_id": "P001", "current_stock": 250, "danger_zone": 200},
-            {"id": "S002", "name_ar": "جنب مايل", "product_id": "P001", "current_stock": 150, "danger_zone": 300},
-            {"id": "S007", "name_ar": "رجل كبيرة", "product_id": "P001", "current_stock": 400, "danger_zone": 200},
+            {"id": "S001", "name_ar": "جنب عدل", "product_id": "P002", "current_stock": 250, "danger_zone": 200},
+            {"id": "S002", "name_ar": "جنب مايل", "product_id": "P002", "current_stock": 150, "danger_zone": 300},
+            {"id": "S007", "name_ar": "رجل كبيرة", "product_id": "P002", "current_stock": 400, "danger_zone": 200},
             {"id": "S009", "name_ar": "دعامة", "product_id": "P002", "current_stock": 2000, "danger_zone": 500},
             {"id": "S010", "name_ar": "جنب يمين", "product_id": "P002", "current_stock": 350, "danger_zone": 400}
         ],
         "bom": [
-            {"product_id": "P001", "part_id": "S001", "qty_per_unit": 1},
-            {"product_id": "P001", "part_id": "S002", "qty_per_unit": 1},
-            {"product_id": "P001", "part_id": "S007", "qty_per_unit": 2},
+            {"product_id": "P002", "part_id": "S001", "qty_per_unit": 1},
+            {"product_id": "P002", "part_id": "S002", "qty_per_unit": 1},
+            {"product_id": "P002", "part_id": "S007", "qty_per_unit": 2},
             {"product_id": "P002", "part_id": "S009", "qty_per_unit": 1},
             {"product_id": "P002", "part_id": "S010", "qty_per_unit": 1}
         ],
@@ -63,7 +64,24 @@ with open(DB_FILE, "r", encoding="utf-8") as db_f:
     except:
         db = build_default_db()
 
-if not db.get("products") or len(db["products"]) == 0:
+# فحص ذكي: إذا كان الملف يحتوي على التقسيمة القديمة الخاطئة، نقوم بتحديثه بالبنية الصحيحة فوراً
+if db.get("parts") and len(db["parts"]) > 0:
+    for part in db["parts"]:
+        if part["id"] in ["S001", "S002", "S007"]:
+            part["product_id"] = "P002"  # نقل التبعية لظهر الكرسي P002
+    
+    # تصحيح الـ BOM أيضاً ليعكس التعديل
+    db["bom"] = [
+        {"product_id": "P002", "part_id": "S001", "qty_per_unit": 1},
+        {"product_id": "P002", "part_id": "S002", "qty_per_unit": 1},
+        {"product_id": "P002", "part_id": "S007", "qty_per_unit": 2},
+        {"product_id": "P002", "part_id": "S009", "qty_per_unit": 1},
+        {"product_id": "P002", "part_id": "S010", "qty_per_unit": 1}
+    ]
+    # الحفاظ على أي منتجات أو حركات إضافية قد تكون أدخلتها يدوياً
+    if "products" not in db or len(db["products"]) < 2:
+        db["products"] = build_default_db()["products"]
+else:
     db = build_default_db()
 
 def save_db():
@@ -82,19 +100,16 @@ with st.sidebar:
         "🛠️ إعدادات المنتجات والـ BOM"
     ])
 
-# ─── 1️⃣ لوحة المراقبة والرسوم البيانية (محدثة بالفلاتر الذكية) ───
+# ─── 1️⃣ لوحة المراقبة والرسوم البيانية ───
 if page == "📊 لوحة المراقبة والرسوم البيانية":
     st.title("📊 نظام المراقبة الذكي ومؤشرات الأداء")
     
-    # تحضير خيارات الفلتر بناءً على المنتجات المتاحة في النظام
     product_dict = {p["name_ar"]: p["id"] for p in db.get("products", [])}
     filter_options = ["🔍 عرض كل المكونات"] + list(product_dict.keys())
     
-    # ويدجت الفلتر في الأعلى
     selected_filter = st.selectbox("🎯 تصفية عرض المخزون حسب المنتج المستهدف:", filter_options)
     st.markdown("---")
     
-    # تصفية البيانات بناءً على اختيار المستخدم
     all_parts = db.get("parts", [])
     if selected_filter == "🔍 عرض كل المكونات":
         filtered_parts = all_parts
@@ -104,11 +119,9 @@ if page == "📊 لوحة المراقبة والرسوم البيانية":
         filtered_parts = [p for p in all_parts if p["product_id"] == target_product_id]
         total_products_display = 1
 
-    # حساب المؤشرات بناءً على الفلتر المختار
     total_parts_display = len(filtered_parts)
     danger_parts_display = sum(1 for p in filtered_parts if p["current_stock"] <= p["danger_zone"])
     
-    # عرض الكروت الذكية للمؤشرات
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(f'<div class="kpi-card"><div class="kpi-label">📦 المنتجات المشمولة بالعرض</div><div class="kpi-value">{total_products_display}</div></div>', unsafe_allow_html=True)
