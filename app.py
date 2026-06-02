@@ -30,7 +30,7 @@ st.markdown("""
 
 DB_FILE = "inventory_db.json"
 
-# إعادة هيكلة شجرة المكونات لتصبح كلها تابعة لـ "ظهر كرسي RT50" بشكل صحيح
+# بنية نظيفة وقاطعة: 5 مكونات فقط للظهر وقاعدة فارغة (تنتظر ما أضفته أنت)
 def build_default_db():
     return {
         "products": [
@@ -64,38 +64,33 @@ with open(DB_FILE, "r", encoding="utf-8") as db_f:
     except:
         db = build_default_db()
 
-# فحص ذكي: إذا كان الملف يحتوي على التقسيمة القديمة الخاطئة، نقوم بتحديثه بالبنية الصحيحة فوراً
-if db.get("parts") and len(db["parts"]) > 0:
+# لتنظيف وتأكيد الـ 5 مكونات الأساسية للظهر وحذف أي تكرار قديم تسبب في الرقم (6)
+if db.get("parts"):
+    fixed_parts = []
+    seen_ids = set()
     for part in db["parts"]:
-        if part["id"] in ["S001", "S002", "S007"]:
-            part["product_id"] = "P002"  # نقل التبعية لظهر الكرسي P002
-    
-    # تصحيح الـ BOM أيضاً ليعكس التعديل
-    db["bom"] = [
-        {"product_id": "P002", "part_id": "S001", "qty_per_unit": 1},
-        {"product_id": "P002", "part_id": "S002", "qty_per_unit": 1},
-        {"product_id": "P002", "part_id": "S007", "qty_per_unit": 2},
-        {"product_id": "P002", "part_id": "S009", "qty_per_unit": 1},
-        {"product_id": "P002", "part_id": "S010", "qty_per_unit": 1}
-    ]
-    # الحفاظ على أي منتجات أو حركات إضافية قد تكون أدخلتها يدوياً
-    if "products" not in db or len(db["products"]) < 2:
-        db["products"] = build_default_db()["products"]
-else:
-    db = build_default_db()
+        # إذا كانت من المكونات الافتراضية للظهر، نتأكد من تبعيتها لـ P002
+        if part["id"] in ["S001", "S002", "S007", "S009", "S010"]:
+            part["product_id"] = "P002"
+        
+        # تجنب التكرار التام في الـ IDs
+        if part["id"] not in seen_ids:
+            fixed_parts.append(part)
+            seen_ids.add(part["id"])
+    db["parts"] = fixed_parts
 
 def save_db():
     with open(DB_FILE, "w", encoding="utf-8") as db_f:
         json.dump(db, db_f, ensure_ascii=False, indent=2)
 
-# القائمة الجانبية
+# القائمة الجانبية (تم استبدال إدارة التوريدات بـ خط إنتاج المكونات الداخلي)
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #1e293b;'>⚙️ لوحة التحكم</h1>", unsafe_allow_html=True)
     st.markdown("---")
     page = st.radio("القائمة الرئيسية:", [
         "📊 لوحة المراقبة والرسوم البيانية", 
         "✏️ تسجيل حركة إنتاج وسحب", 
-        "📦 إدارة التوريدات والشحنات",
+        "🛠️ خط إنتاج وتصنيع المكونات",
         "📋 سجل العمليات والتقارير",
         "🛠️ إعدادات المنتجات والـ BOM"
     ])
@@ -140,15 +135,15 @@ if page == "📊 لوحة المراقبة والرسوم البيانية":
         fig.update_layout(barmode="group", height=400, font=dict(family="Cairo"), margin=dict(t=20, b=20, l=20, r=20))
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("💡 لا توجد قطع غيار مسجلة تحت هذا التصنيف حالياً. اذهب لصفحة الإعدادات لربط قطع الغيار بهذا المنتج.")
+        st.info("💡 لا توجد قطع غيار مسجلة تحت هذا التصنيف حالياً.")
 
-# ─── 2️⃣ تسجيل حركة إنتاج وسحب ───
+# ─── 2️⃣ تسجيل حركة إنتاج وسحب المنتجات النهائية ───
 elif page == "✏️ تسجيل حركة إنتاج وسحب":
     st.title("✏️ قيد خطة الإنتاج اليومية والخصم التلقائي")
     
     if db.get("products"):
         prod_options = {p["name_ar"]: p["id"] for p in db["products"]}
-        selected_prod = st.selectbox("اختر المنتج النهائي المستهدف:", list(prod_options.keys()))
+        selected_prod = st.selectbox("اختر المنتج النهائي المستهدف للإنتاج اليوم:", list(prod_options.keys()))
         qty = st.number_input("الكمية التي تم تصنيعها (وحدة):", min_value=1, value=100, step=10)
         
         if st.button("💾 تنفيذ سحب المكونات وحفظ الحركة", type="primary"):
@@ -172,32 +167,89 @@ elif page == "✏️ تسجيل حركة إنتاج وسحب":
             else:
                 st.error("❌ هذا المنتج ليس له مكونات مسجلة في الـ BOM حتى الآن!")
     else:
-        st.warning("⚠️ لا توجد منتجات مسجلة حتى الآن. أضف منتجاً أولاً من صفحة الإعدادات.")
+        st.warning("⚠️ لا توجد منتجات مسجلة حتى الآن.")
 
-# ─── 3️⃣ إدارة التوريدات والشحنات ───
-elif page == "📦 إدارة التوريدات والشحنات":
-    st.title("📦 تسجيل شحنات التوريد الجديدة للمخزن")
+# ─── 3️⃣ خط إنتاج وتصنيع المكونات (الجديد كلياً بديل التوريدات) ───
+elif page == "🛠️ خط إنتاج وتصنيع المكونات":
+    st.title("🛠️ خط تصنيع المكونات الداخلي ورفع التقارير")
+    st.info("💡 هنا يتم تسجيل إنتاج ورش التصنيع الداخلية للمكونات (جنب عدل، جنب مايل، إلخ). يمكنك رفع تقرير الإنتاج اليومي مباشرة لتحديث المخازن بضغطة واحدة!")
     
+    st.markdown("<div class=\"section-title\">📂 رفع تقرير الإنتاج اليومي للمكونات</div>", unsafe_allow_html=True)
+    
+    # منشئ فكرة رفع ملفات الـ Excel أو CSV لتقرير الورشة
+    uploaded_file = st.file_uploader("اختر ملف التقرير اليومي (Excel أو CSV):", type=["xlsx", "csv", "xls"])
+    
+    if uploaded_file is not None:
+        try:
+            # قراءة الملف بمرونة سواء كان إكسيل أو CSV
+            if uploaded_file.name.endswith('.csv'):
+                df_report = pd.read_csv(uploaded_file)
+            else:
+                df_report = pd.read_excel(uploaded_file)
+                
+            st.write("📊 معاينة البيانات المكتشفة داخل التقرير:")
+            st.dataframe(df_report, use_container_width=True)
+            
+            # شرح للمستخدم عن الأعمدة المطلوبة
+            st.warning("⚠️ لضمان القراءة الصحيحة، تأكد أن التقرير يحتوي على أعمدة واضحة بأسماء: [التاريخ]، [المكون]، [الكمية المصنعة]")
+            
+            date_col = st.selectbox("اختر العمود الممثل لـ (التاريخ):", df_report.columns, index=0 if "التاريخ" in df_report.columns else 0)
+            part_col = st.selectbox("اختر العمود الممثل لـ (اسم المكون):", df_report.columns, index=0 if "المكون" in df_report.columns else 0)
+            qty_col = st.selectbox("اختر العمود الممثل لـ (الكمية المصنعة):", df_report.columns, index=0 if "الكمية المصنعة" in df_report.columns else 0)
+            
+            if st.button("🚀 استيراد التقرير وتحديث أرصدة المخازن فوراً", type="primary"):
+                success_count = 0
+                error_parts = []
+                
+                for _, row in df_report.iterrows():
+                    p_name = str(row[part_col]).strip()
+                    p_qty = int(row[qty_col])
+                    p_date = str(row[date_col])
+                    
+                    # البحث عن المكون في المخزن لمطابقة الاسم
+                    part = next((p for p in db["parts"] if p["name_ar"] == p_name), None)
+                    if part:
+                        part["current_stock"] += p_qty
+                        db["daily_logs"].append({
+                            "التاريخ": p_date,
+                            "نوع الحركة": "إنتاج ورش داخلي (تقرير)",
+                            "تفاصيل العملية": f"تصنيع وتوريد {p_qty} قطعة من ({p_name}) إلى المخزن"
+                        })
+                        success_count += 1
+                    else:
+                        if p_name not in error_parts:
+                            error_parts.append(p_name)
+                
+                save_db()
+                st.success(f"✅ تم معالجة التقرير بنجاح! تم تحديث مخزون {success_count} حركة.")
+                if error_parts:
+                    st.warning(f"⚠️ هذه الأسماء لم يتم العثور عليها في قائمة الإعدادات لقطع الغيار ولذلك تم تخطيها: {error_parts}")
+                st.rerun()
+                
+        except Exception as e:
+            st.error(f"❌ حدث خطأ أثناء قراءة الملف الفني: {e}")
+            
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    st.subheader("📝 إدخال إنتاج يدوي سريع (في حالة عدم وجود ملف تقرير اليوم)")
     if db.get("parts"):
         part_options = {p["name_ar"]: p["id"] for p in db["parts"]}
-        selected_part = st.selectbox("اختر المكون المستلم:", list(part_options.keys()))
-        added_qty = st.number_input("الكمية الموردة الجديدة:", min_value=1, value=500, step=50)
+        selected_part = st.selectbox("اختر المكون الذي تم إنتاجه بالورشة:", list(part_options.keys()))
+        added_qty = st.number_input("الكمية التي تم تصنيعها حديثاً:", min_value=1, value=100, step=10)
+        custom_date = st.date_input("تاريخ تصنيع هذه الكمية:", date.today())
         
-        if st.button("➕ إضافة الوارد للمخازن", type="primary"):
+        if st.button("➕ تسجيل الإنتاج اليدوي في المخزن"):
             part_id = part_options[selected_part]
             part = next((p for p in db["parts"] if p["id"] == part_id), None)
             if part:
                 part["current_stock"] += added_qty
                 db["daily_logs"].append({
-                    "التاريخ": str(date.today()),
-                    "نوع الحركة": "توريد خارجي للمخزن",
-                    "تفاصيل العملية": f"إضافة {added_qty} وحدة للمكون: {selected_part}"
+                    "التاريخ": str(custom_date),
+                    "نوع الحركة": "إنتاج ورش داخلي (يدوي)",
+                    "تفاصيل العملية": f"إدخال يدوي لإنتاج {added_qty} قطعة من: {selected_part}"
                 })
                 save_db()
-                st.success(f"✅ تم توريد {added_qty} شحنة جديدة لـ {selected_part}!")
+                st.success(f"✅ تم بنجاح إضافة {added_qty} قطعة إلى رصيد {selected_part}!")
                 st.rerun()
-    else:
-        st.warning("⚠️ لا توجد قطع أو مكونات غيار مسجلة بعد. يرجى إضافتها وربطها بالمنتجات أولاً.")
 
 # ─── 4️⃣ سجل العمليات والتقارير ───
 elif page == "📋 سجل العمليات والتقارير":
@@ -205,6 +257,9 @@ elif page == "📋 سجل العمليات والتقارير":
     
     if db.get("daily_logs"):
         df_logs = pd.DataFrame(db["daily_logs"])
+        # ترتيب السجل لعرض الأحدث بالتاريخ أولاً
+        if "التاريخ" in df_logs.columns:
+            df_logs = df_logs.sort_values(by="التاريخ", ascending=False)
         st.dataframe(df_logs, use_container_width=True, hide_index=True)
         
         csv = df_logs.to_csv(index=False).encode("utf-8-sig")
