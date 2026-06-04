@@ -30,7 +30,7 @@ st.markdown("""
 
 DB_FILE = "inventory_db.json"
 
-# بناء شجرة البيانات النظيفة والمطابقة لأسماء الشيت الحقيقية تماماً
+# بناء شجرة البيانات النظيفة والمطابقة لأسماء الورشة الفعيلة (قاعدة 8 وظهر 5)
 def build_clean_sheet_db():
     return {
         "products": [
@@ -38,7 +38,7 @@ def build_clean_sheet_db():
             {"id": "P002", "name_ar": "ظهر كرسي RT50"}
         ],
         "parts": [
-            # ── الأسماء الـ 8 الحقيقية المأخوذة من الشيت الخاص بك ──
+            # ── 🛠️ مكونات القاعدة الـ 8 الحقيقية الصحيحة ──
             {"id": "B001", "name_ar": "جنب عدل", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
             {"id": "B002", "name_ar": "جنب مايل", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
             {"id": "B003", "name_ar": "حرف z كبير", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
@@ -46,7 +46,14 @@ def build_clean_sheet_db():
             {"id": "B005", "name_ar": "زاوية", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
             {"id": "B006", "name_ar": "حرف u", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
             {"id": "B007", "name_ar": "رجل كبيرة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B008", "name_ar": "رجل مايلة", "product_id": "P001", "current_stock": 500, "danger_zone": 100}
+            {"id": "B008", "name_ar": "رجل مايلة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            
+            # ── 🪑 مكونات الظهر الـ 5 الأصلية المستعادة بالكامل ──
+            {"id": "S001", "name_ar": "جنب عدل ظهر", "product_id": "P002", "current_stock": 250, "danger_zone": 200},
+            {"id": "S002", "name_ar": "جنب مايل ظهر", "product_id": "P002", "current_stock": 150, "danger_zone": 300},
+            {"id": "S003", "name_ar": "رجل كبيرة ظهر", "product_id": "P002", "current_stock": 400, "danger_zone": 200},
+            {"id": "S004", "name_ar": "دعامة", "product_id": "P002", "current_stock": 2000, "danger_zone": 500},
+            {"id": "S005", "name_ar": "جنب يمين", "product_id": "P002", "current_stock": 350, "danger_zone": 400}
         ],
         "bom": [
             {"product_id": "P001", "part_id": "B001", "qty_per_unit": 1},
@@ -54,14 +61,20 @@ def build_clean_sheet_db():
             {"product_id": "P001", "part_id": "B003", "qty_per_unit": 1},
             {"product_id": "P001", "part_id": "B004", "qty_per_unit": 1},
             {"product_id": "P001", "part_id": "B005", "qty_per_unit": 1},
-            {"product_id": "P001", "part_id": "B006", "qty_per_unit": 1},
+            {"product_id": "P001", "part_id": "B006", "qty_per_unit": 2},
             {"product_id": "P001", "part_id": "B007", "qty_per_unit": 1},
-            {"product_id": "P001", "part_id": "B008", "qty_per_unit": 1}
+            {"product_id": "P001", "part_id": "B008", "qty_per_unit": 1},
+            
+            {"product_id": "P002", "part_id": "S001", "qty_per_unit": 1},
+            {"product_id": "P002", "part_id": "S002", "qty_per_unit": 1},
+            {"product_id": "P002", "part_id": "S003", "qty_per_unit": 2},
+            {"product_id": "P002", "part_id": "S004", "qty_per_unit": 1},
+            {"product_id": "P002", "part_id": "S005", "qty_per_unit": 1}
         ],
         "daily_logs": []
     }
 
-# الكود المطور للتأكد من المزامنة النظيفة للبيانات وتفادي كاش المتصفح القديم
+# كود إدارة قواعد البيانات ومنع الكاش القديم من التداخل
 if not os.path.exists(DB_FILE) or st.query_params.get("reset") == "true":
     db = build_clean_sheet_db()
     with open(DB_FILE, "w", encoding="utf-8") as db_f:
@@ -236,7 +249,7 @@ elif page == "🛠️ إعدادات المنتجات والـ BOM":
         "➕ إضافة منتج جديد (مثل موديل كرسي جديد)", 
         "🔧 إضافة مكون غيار جديد تماماً للـ BOM",
         "❌ حذف منتج أو مكون نهائياً من القوائم",
-        "🚨 إعادة ضبط وتثبيت الأسماء الحقيقية للشيت فوراً"
+        "🚨 إعادة ضبط واستعادة الـ 13 مكوناً الحقيقية فوراً"
     ])
     
     st.markdown("---")
@@ -295,10 +308,10 @@ elif page == "🛠️ إعدادات المنتجات والـ BOM":
                     st.success("✅ تم مسح المكون تماماً من قواعد البيانات!")
                     st.rerun()
 
-    elif sub_page == "🚨 إعادة ضبط وتثبيت الأسماء الحقيقية للشيت فوراً":
-        st.error("❗ خيار ضبط وتحديث الأسماء الحالية لتطابق الشيت الأصلي للورشة.")
-        if st.button("🔥 اضغط لتنفيذ فرض الأسماء وتثبيتها الآن"):
+    elif sub_page == "🚨 إعادة ضبط واستعادة الـ 13 مكوناً الحقيقية فوراً":
+        st.error("❗ خيار تصفير الذاكرة واسترجاع القوائم الأصلية الصحيحة.")
+        if st.button("🔥 اضغط لاستعادة وتثبيت كل المكونات الحقيقية الآن"):
             db = build_clean_sheet_db()
             save_db()
-            st.success("✅ تم تحديث وتثبيت الأسماء الـ 8 الحقيقية بنجاح واشتغلت لوحة المراقبة!")
+            st.success("✅ تم التثبيت النهائي! الظهر والقاعدة يظهرون الآن بأسماء الورشة الصحيحة.")
             st.rerun()
