@@ -7,13 +7,13 @@ import plotly.graph_objects as go
 import os
 
 st.set_page_config(
-    page_title="نظام المخزون المطور",
+    page_title="نظام إدارة مخزون الكراسي المحترف",
     page_icon="🪑",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# تصميم واجهة المستخدم
+# تصميم واجهة المستخدم بالكامل باللغة العربية
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap');
@@ -30,25 +30,25 @@ st.markdown("""
 
 DB_FILE = "inventory_db.json"
 
-# بناء المخزن بالأسماء الطبيعية والأصلية تماماً لمنع العك
-def build_natural_db():
+# بناء شجرة البيانات النظيفة والمطابقة للشيتات المرفوعة تماماً
+def build_clean_sheet_db():
     return {
         "products": [
             {"id": "P001", "name_ar": "قاعدة كرسي RT50"},
             {"id": "P002", "name_ar": "ظهر كرسي RT50"}
         ],
         "parts": [
-            # ── الأسماء الطبيعية الحقيقية لمكونات القاعدة (8 مكونات) ──
-            {"id": "B001", "name_ar": "شاسيه قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B002", "name_ar": "نجمة خماسية", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B003", "name_ar": "بستم هيدروليك", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B004", "name_ar": "طقم عجل (5 قطع)", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B005", "name_ar": "كاسات بستم", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            # ── أسامي مكونات القاعدة الـ 8 الحقيقية المطابقة للشيت ──
+            {"id": "B001", "name_ar": "شاسيه قاعدة RT50", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B002", "name_ar": "نجمة خماسية قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B003", "name_ar": "بستم هيدروليك قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B004", "name_ar": "طقم عجل قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B005", "name_ar": "كاسات بستم قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
             {"id": "B006", "name_ar": "فوم قاعدة مبطن", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
             {"id": "B007", "name_ar": "خشب قاعدة أبلكاش", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B008", "name_ar": "قماش / جلد تنجيد", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B008", "name_ar": "جلد / قماش تنجيد قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
             
-            # ── الأسماء الطبيعية الأصلية لمكونات الظهر (5 مكونات) ──
+            # ── أسامي مكونات الظهر الـ 5 الحقيقية المطابقة للشيت ──
             {"id": "S001", "name_ar": "جنب عدل", "product_id": "P002", "current_stock": 250, "danger_zone": 200},
             {"id": "S002", "name_ar": "جنب مايل", "product_id": "P002", "current_stock": 150, "danger_zone": 300},
             {"id": "S007", "name_ar": "رجل كبيرة", "product_id": "P002", "current_stock": 400, "danger_zone": 200},
@@ -74,9 +74,9 @@ def build_natural_db():
         "daily_logs": []
     }
 
-# الكود المصلح والمتوافق بالكامل مع تحديثات Streamlit الحديثة لعام 2026
+# إجبار النظام على تنظيف نفسه وتطبيق الأسماء الحقيقية
 if not os.path.exists(DB_FILE) or st.query_params.get("reset") == "true":
-    db = build_natural_db()
+    db = build_clean_sheet_db()
     with open(DB_FILE, "w", encoding="utf-8") as db_f:
         json.dump(db, db_f, ensure_ascii=False, indent=2)
 else:
@@ -84,15 +84,15 @@ else:
         try:
             db = json.load(db_f)
             if "parts" not in db or len(db["parts"]) == 0:
-                db = build_natural_db()
+                db = build_clean_sheet_db()
         except:
-            db = build_natural_db()
+            db = build_clean_sheet_db()
 
 def save_db():
     with open(DB_FILE, "w", encoding="utf-8") as db_f:
         json.dump(db, db_f, ensure_ascii=False, indent=2)
 
-# القائمة الجانبية
+# القائمة الجانبية للسيستم
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #1e293b;'>⚙️ لوحة التحكم</h1>", unsafe_allow_html=True)
     st.markdown("---")
@@ -143,8 +143,6 @@ if page == "📊 لوحة المراقبة والرسوم البيانية":
         fig.add_trace(go.Scatter(name="حد الأمان (الخطر)", x=df_parts["name_ar"], y=df_parts["danger_zone"], mode="lines+markers", line=dict(color="#ef4444", width=3, dash="dash")))
         fig.update_layout(barmode="group", height=400, font=dict(family="Cairo"), margin=dict(t=20, b=20, l=20, r=20))
         st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("💡 لا توجد مكونات مسجلة حالياً.")
 
 # ─── 2️⃣ تسجيل حركة إنتاج وسحب المنتجات النهائية ───
 elif page == "✏️ تسجيل حركة إنتاج وسحب":
@@ -172,8 +170,6 @@ elif page == "✏️ تسجيل حركة إنتاج وسحب":
                 save_db()
                 st.success("✅ تم تحديث المخزن وتسجيل الحركة بنجاح!")
                 st.rerun()
-            else:
-                st.error("❌ هذا المنتج ليس له مكونات مسجلة في الـ BOM حتى الآن!")
 
 # ─── 3️⃣ خط إنتاج وتصنيع المكونات ───
 elif page == "🛠️ خط إنتاج وتصنيع المكونات":
@@ -245,7 +241,7 @@ elif page == "📋 سجل العمليات والتقارير":
     if db.get("daily_logs"):
         st.dataframe(pd.DataFrame(db["daily_logs"]), use_container_width=True, hide_index=True)
 
-# ─── 5️⃣ إعدادات المنتجات والـ BOM ───
+# ─── 5️⃣ إعدادات المنتجات والـ BOM (التبويب المطلوب) ───
 elif page == "🛠️ إعدادات المنتجات والـ BOM":
     st.title("🛠️ إدارة وهيكلة النظام الفنية (إضافة / حذف)")
     
@@ -253,7 +249,7 @@ elif page == "🛠️ إعدادات المنتجات والـ BOM":
         "➕ إضافة منتج جديد (مثل موديل كرسي جديد)", 
         "🔧 إضافة مكون غيار جديد تماماً للـ BOM",
         "❌ حذف منتج أو مكون نهائياً من القوائم",
-        "🚨 إعادة ضبط المصنع للأسماء الطبيعية الأصلية"
+        "🚨 إعادة ضبط وتثبيت أسماء الشيت الأصلية فوراً"
     ])
     
     st.markdown("---")
@@ -312,10 +308,10 @@ elif page == "🛠️ إعدادات المنتجات والـ BOM":
                     st.success("✅ تم مسح المكون تماماً من قواعد البيانات!")
                     st.rerun()
 
-    elif sub_page == "🚨 إعادة ضبط المصنع للأسماء الطبيعية الأصلية":
-        st.error("❗ تحذير: هذا الخيار سيعيد توليد الأسماء الطبيعية الافتراضية النظيفة (5 للظهر و 8 للقاعدة) ويمسح أي تداخل حالي بالسيرفر.")
-        if st.button("🔥 اضغط لتنفيذ استعادة الأسماء والعدادات الأصلية فوراً"):
-            db = build_natural_db()
+    elif sub_page == "🚨 إعادة ضبط وتثبيت أسماء الشيت الأصلية فوراً":
+        st.error("❗ خيار تصفير وضبط الأسماء الصحيحة مباشرة من ملفات الورشة.")
+        if st.button("🔥 اضغط لتنفيذ فرض الأسماء وتثبيتها الآن"):
+            db = build_clean_sheet_db()
             save_db()
-            st.success("✅ تم فرض الأسماء الطبيعية بنجاح (الظهر 5 والقاعدة 8)!")
+            st.success("✅ تم تنظيف السيرفر وتثبيت الأسماء الطبيعية بنجاح (الظهر 5 والقاعدة 8)!")
             st.rerun()
