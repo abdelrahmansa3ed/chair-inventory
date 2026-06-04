@@ -74,8 +74,8 @@ def build_natural_db():
         "daily_logs": []
     }
 
-# إجبار السيرفر على تطبيق الأسماء الطبيعية النظيفة فوراً عند تشغيل هذا الكود
-if not os.path.exists(DB_FILE) or st.experimental_get_query_params().get("reset", [None])[0] == "true":
+# الكود المصلح والمتوافق بالكامل مع تحديثات Streamlit الحديثة لعام 2026
+if not os.path.exists(DB_FILE) or st.query_params.get("reset") == "true":
     db = build_natural_db()
     with open(DB_FILE, "w", encoding="utf-8") as db_f:
         json.dump(db, db_f, ensure_ascii=False, indent=2)
@@ -83,7 +83,6 @@ else:
     with open(DB_FILE, "r", encoding="utf-8") as db_f:
         try:
             db = json.load(db_f)
-            # إذا تداخلت الأسماء مجدداً، نقوم بدمج الهيكل النظيف لحماية التطبيق
             if "parts" not in db or len(db["parts"]) == 0:
                 db = build_natural_db()
         except:
@@ -246,7 +245,7 @@ elif page == "📋 سجل العمليات والتقارير":
     if db.get("daily_logs"):
         st.dataframe(pd.DataFrame(db["daily_logs"]), use_container_width=True, hide_index=True)
 
-# ─── 5️⃣ إعدادات المنتجات والـ BOM (التبويب العائد بكامل حريته) ───
+# ─── 5️⃣ إعدادات المنتجات والـ BOM ───
 elif page == "🛠️ إعدادات المنتجات والـ BOM":
     st.title("🛠️ إدارة وهيكلة النظام الفنية (إضافة / حذف)")
     
@@ -314,7 +313,7 @@ elif page == "🛠️ إعدادات المنتجات والـ BOM":
                     st.rerun()
 
     elif sub_page == "🚨 إعادة ضبط المصنع للأسماء الطبيعية الأصلية":
-        st.error("❗ تحذير: هذا الخيار سيعيد توليد الأسومة الطبيعية الافتراضية النظيفة (5 للظهر و 8 للقاعدة) ويمسح أي تداخل حالي بالسيرفر.")
+        st.error("❗ تحذير: هذا الخيار سيعيد توليد الأسماء الطبيعية الافتراضية النظيفة (5 للظهر و 8 للقاعدة) ويمسح أي تداخل حالي بالسيرفر.")
         if st.button("🔥 اضغط لتنفيذ استعادة الأسماء والعدادات الأصلية فوراً"):
             db = build_natural_db()
             save_db()
