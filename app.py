@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# تصميم واجهة المستخدم بالكامل باللغة العربية
+# تصميم واجهة المستخدم الاحترافية بالكامل باللغة العربية
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap');
@@ -30,7 +30,7 @@ st.markdown("""
 
 DB_FILE = "inventory_db.json"
 
-# بناء شجرة البيانات النظيفة والمطابقة للشيتات المرفوعة تماماً
+# بناء شجرة البيانات النظيفة والمطابقة لأسماء الشيت الحقيقية تماماً
 def build_clean_sheet_db():
     return {
         "products": [
@@ -38,22 +38,15 @@ def build_clean_sheet_db():
             {"id": "P002", "name_ar": "ظهر كرسي RT50"}
         ],
         "parts": [
-            # ── أسامي مكونات القاعدة الـ 8 الحقيقية المطابقة للشيت ──
-            {"id": "B001", "name_ar": "شاسيه قاعدة RT50", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B002", "name_ar": "نجمة خماسية قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B003", "name_ar": "بستم هيدروليك قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B004", "name_ar": "طقم عجل قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B005", "name_ar": "كاسات بستم قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B006", "name_ar": "فوم قاعدة مبطن", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B007", "name_ar": "خشب قاعدة أبلكاش", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            {"id": "B008", "name_ar": "جلد / قماش تنجيد قاعدة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
-            
-            # ── أسامي مكونات الظهر الـ 5 الحقيقية المطابقة للشيت ──
-            {"id": "S001", "name_ar": "جنب عدل", "product_id": "P002", "current_stock": 250, "danger_zone": 200},
-            {"id": "S002", "name_ar": "جنب مايل", "product_id": "P002", "current_stock": 150, "danger_zone": 300},
-            {"id": "S007", "name_ar": "رجل كبيرة", "product_id": "P002", "current_stock": 400, "danger_zone": 200},
-            {"id": "S009", "name_ar": "دعامة", "product_id": "P002", "current_stock": 2000, "danger_zone": 500},
-            {"id": "S010", "name_ar": "جنب يمين", "product_id": "P002", "current_stock": 350, "danger_zone": 400}
+            # ── الأسماء الـ 8 الحقيقية المأخوذة من الشيت الخاص بك ──
+            {"id": "B001", "name_ar": "جنب عدل", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B002", "name_ar": "جنب مايل", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B003", "name_ar": "حرف z كبير", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B004", "name_ar": "حرف z صغير", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B005", "name_ar": "زاوية", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B006", "name_ar": "حرف u", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B007", "name_ar": "رجل كبيرة", "product_id": "P001", "current_stock": 500, "danger_zone": 100},
+            {"id": "B008", "name_ar": "رجل مايلة", "product_id": "P001", "current_stock": 500, "danger_zone": 100}
         ],
         "bom": [
             {"product_id": "P001", "part_id": "B001", "qty_per_unit": 1},
@@ -63,18 +56,12 @@ def build_clean_sheet_db():
             {"product_id": "P001", "part_id": "B005", "qty_per_unit": 1},
             {"product_id": "P001", "part_id": "B006", "qty_per_unit": 1},
             {"product_id": "P001", "part_id": "B007", "qty_per_unit": 1},
-            {"product_id": "P001", "part_id": "B008", "qty_per_unit": 1},
-            
-            {"product_id": "P002", "part_id": "S001", "qty_per_unit": 1},
-            {"product_id": "P002", "part_id": "S002", "qty_per_unit": 1},
-            {"product_id": "P002", "part_id": "S007", "qty_per_unit": 2},
-            {"product_id": "P002", "part_id": "S009", "qty_per_unit": 1},
-            {"product_id": "P002", "part_id": "S010", "qty_per_unit": 1}
+            {"product_id": "P001", "part_id": "B008", "qty_per_unit": 1}
         ],
         "daily_logs": []
     }
 
-# إجبار النظام على تنظيف نفسه وتطبيق الأسماء الحقيقية
+# الكود المطور للتأكد من المزامنة النظيفة للبيانات وتفادي كاش المتصفح القديم
 if not os.path.exists(DB_FILE) or st.query_params.get("reset") == "true":
     db = build_clean_sheet_db()
     with open(DB_FILE, "w", encoding="utf-8") as db_f:
@@ -241,7 +228,7 @@ elif page == "📋 سجل العمليات والتقارير":
     if db.get("daily_logs"):
         st.dataframe(pd.DataFrame(db["daily_logs"]), use_container_width=True, hide_index=True)
 
-# ─── 5️⃣ إعدادات المنتجات والـ BOM (التبويب المطلوب) ───
+# ─── 5️⃣ إعدادات المنتجات والـ BOM ───
 elif page == "🛠️ إعدادات المنتجات والـ BOM":
     st.title("🛠️ إدارة وهيكلة النظام الفنية (إضافة / حذف)")
     
@@ -249,7 +236,7 @@ elif page == "🛠️ إعدادات المنتجات والـ BOM":
         "➕ إضافة منتج جديد (مثل موديل كرسي جديد)", 
         "🔧 إضافة مكون غيار جديد تماماً للـ BOM",
         "❌ حذف منتج أو مكون نهائياً من القوائم",
-        "🚨 إعادة ضبط وتثبيت أسماء الشيت الأصلية فوراً"
+        "🚨 إعادة ضبط وتثبيت الأسماء الحقيقية للشيت فوراً"
     ])
     
     st.markdown("---")
@@ -308,10 +295,10 @@ elif page == "🛠️ إعدادات المنتجات والـ BOM":
                     st.success("✅ تم مسح المكون تماماً من قواعد البيانات!")
                     st.rerun()
 
-    elif sub_page == "🚨 إعادة ضبط وتثبيت أسماء الشيت الأصلية فوراً":
-        st.error("❗ خيار تصفير وضبط الأسماء الصحيحة مباشرة من ملفات الورشة.")
+    elif sub_page == "🚨 إعادة ضبط وتثبيت الأسماء الحقيقية للشيت فوراً":
+        st.error("❗ خيار ضبط وتحديث الأسماء الحالية لتطابق الشيت الأصلي للورشة.")
         if st.button("🔥 اضغط لتنفيذ فرض الأسماء وتثبيتها الآن"):
             db = build_clean_sheet_db()
             save_db()
-            st.success("✅ تم تنظيف السيرفر وتثبيت الأسماء الطبيعية بنجاح (الظهر 5 والقاعدة 8)!")
+            st.success("✅ تم تحديث وتثبيت الأسماء الـ 8 الحقيقية بنجاح واشتغلت لوحة المراقبة!")
             st.rerun()
